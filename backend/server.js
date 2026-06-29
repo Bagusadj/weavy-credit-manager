@@ -792,6 +792,86 @@ app.post('/api/workflows/kling-generate', async (req, res) => {
     }
 });
 
+// Generate Video (Kling Motion Control)
+app.post('/api/generate/video', upload.single('image'), async (req, res) => {
+    try {
+        const { accountId, workflowId, motionStrength, duration, resolution, fps, outputFormat, outputQuality } = req.body;
+        const imageFile = req.file;
+
+        if (!accountId) {
+            return res.status(400).json({ error: 'Account ID required' });
+        }
+
+        // Get account
+        db.get('SELECT * FROM accounts WHERE id = ?', [accountId], async (err, account) => {
+            if (err || !account) {
+                return res.status(404).json({ error: 'Account not found' });
+            }
+
+            const creditsNeeded = 123;
+            if (account.credit < creditsNeeded) {
+                return res.status(400).json({ error: 'Insufficient credits' });
+            }
+
+            try {
+                const auth = account.api_key || account.password;
+                
+                // Call Weavy Kling workflow
+                const formData = new FormData();
+                if (imageFile) {
+                    formData.append('image', fs.createReadStream(imageFile.path));
+                }
+                formData.append('motion_strength', motionStrength || 5);
+                formData.append('duration', duration || 5);
+                formData.append('resolution', resolution || '720p');
+                formData.append('fps', fps || 24);
+                formData.append('format', outputFormat || 'mp4');
+                formData.append('quality', outputQuality || 'high');
+
+                const response = await axios.post(
+                    `${WEAVY_BASE_URL}/workflows/${workflowId || 'kling-motion'}/run`,
+                    formData,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${auth}`,
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        timeout: 300000
+                    }
+                );
+
+                const videoUrl = response.data.video_url || response.data.output_url;
+
+                // Deduct credits
+                const newCredit = account.credit - creditsNeeded;
+                db.run(`UPDATE accounts SET credit = ? WHERE id = ?`, [newCredit, accountId]);
+
+                // Log usage
+                db.run(`INSERT INTO usage_log (account_id, model, credits_used) VALUES (?, ?, ?)`, 
+                    [accountId, 'kling-motion', creditsNeeded]);
+
+                // Cleanup
+                if (imageFile) fs.unlinkSync(imageFile.path);
+
+                res.json({
+                    success: true,
+                    videoUrl,
+                    creditsUsed: creditsNeeded,
+                    remainingCredits: newCredit
+                });
+
+            } catch (error) {
+                console.error('Generate video error:', error.message);
+                res.status(500).json({ error: error.message || 'Video generation failed' });
+            }
+        });
+
+    } catch (error) {
+        console.error('Video generation error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
