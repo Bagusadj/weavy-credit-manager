@@ -33,8 +33,7 @@ function loadSectionData(sectionId) {
         case 'accounts':
             loadAccounts();
             break;
-        case 'generate':
-            loadModels();
+        case 'workflow':
             loadDashboardData();
             break;
         case 'history':
@@ -444,5 +443,115 @@ function formatDate(dateString) {
     });
 }
 
+// ── Workflow Section (Kling Motion Control) ────────────────────────────────
+let selectedImage = null;
+let selectedWorkflowId = 1;
+
+// Image upload
+const imageUploadArea = document.getElementById('imageUploadArea');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+
+imageUploadArea.addEventListener('click', () => imageInput.click());
+imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleImageSelect(file);
+});
+
+function handleImageSelect(file) {
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File terlalu besar! Max 5MB');
+        return;
+    }
+    
+    selectedImage = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        imagePreview.style.display = 'block';
+        imageUploadArea.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('removeImage').addEventListener('click', () => {
+    selectedImage = null;
+    imagePreview.style.display = 'none';
+    imageUploadArea.style.display = 'block';
+    imageInput.value = '';
+});
+
+// Motion strength slider
+const motionStrength = document.getElementById('motionStrength');
+const motionValue = document.getElementById('motionValue');
+motionStrength.addEventListener('input', () => {
+    motionValue.textContent = motionStrength.value;
+});
+
+// Generate Video
+document.getElementById('generateVideoBtn').addEventListener('click', async () => {
+    if (!selectedImage) {
+        alert('Upload gambar dulu!');
+        return;
+    }
+
+    const btn = document.getElementById('generateVideoBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Processing...';
+
+    try {
+        // Get account with highest credits
+        const accResponse = await fetch(`${API_BASE}/accounts`);
+        const accData = await accResponse.json();
+        const activeAccounts = accData.accounts
+            .filter(acc => acc.status === 'active' && acc.credit >= 123)
+            .sort((a, b) => b.credit - a.credit);
+
+        if (activeAccounts.length === 0) {
+            alert('Tidak ada akun dengan kredit cukup (min 123)!');
+            btn.disabled = false;
+            btn.textContent = '🚀 Generate Video (💰 123 Kredit)';
+            return;
+        }
+
+        const accountId = activeAccounts[0].id;
+
+        // Upload image and generate
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        formData.append('accountId', accountId);
+        formData.append('workflowId', selectedWorkflowId);
+        formData.append('motionStrength', motionStrength.value);
+        formData.append('duration', document.getElementById('duration').value);
+
+        const response = await fetch(`${API_BASE}/generate/video`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            document.getElementById('videoResultCard').style.display = 'block';
+            document.getElementById('resultVideo').src = result.videoUrl;
+            document.getElementById('downloadLink').href = result.videoUrl;
+            document.getElementById('videoUsedCredits').textContent = result.creditsUsed;
+            document.getElementById('videoRemainingCredits').textContent = result.remainingCredits;
+
+            // Update credits display
+            loadDashboardData();
+        } else {
+            alert('Generate gagal: ' + result.error);
+        }
+
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Generate Video (💰 123 Kredit)';
+    }
+});
+
 // Initial load
-loadDashboardData();// Force redeploy Mon Jun 29 13:41:31 UTC 2026
+loadDashboardData();

@@ -26,8 +26,11 @@ app.use(express.static(path.join(__dirname, '../frontend'), {
 }));
 app.use('/uploads', express.static('uploads'));
 
-// File upload setup
-const upload = multer({ dest: 'uploads/' });
+// File upload setup (max 5MB)
+const upload = multer({ 
+    dest: 'uploads/',
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 // SQLite Database
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, './data/credits.db');
@@ -54,6 +57,25 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (account_id) REFERENCES accounts(id)
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS workflows (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        credits_cost INTEGER DEFAULT 123,
+        config TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Insert default Kling Motion Control workflow
+    db.run(`INSERT OR IGNORE INTO workflows (name, description, credits_cost, config) VALUES (
+        'Kling Motion Control',
+        'Image to Video generation with motion control',
+        123,
+        '{"nodes": [{"id": "input", "type": "image", "name": "Input Image"}, {"id": "kling", "type": "video_gen", "name": "Kling Motion", "params": {"motion_strength": 5, "duration": 5}}, {"id": "output", "type": "video", "name": "Output Video"}]}'
+    )`, [], function(err) {
+        if (err) console.log('Workflow insert error:', err.message);
+    });
 });
 
 // Weavy API Configuration
@@ -422,8 +444,8 @@ app.delete('/api/accounts/:id', (req, res) => {
     });
 });
 
-// Auto-register Weavy accounts
-app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, res) => {
+// Bulk login for existing Weavy accounts (with API key or password)
+app.post('/api/accounts/bulk-login', upload.single('accounts'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -431,110 +453,133 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
 
         const filePath = req.file.path;
         const fileContent = fs.readFileSync(filePath, 'utf-8');
-        const lines = fileContent.split('\n');
-        
-        // Parse into account pairs (deduplicate by email)
-        const accounts = [];
+        const lines = fileContent.split('\n').filter(line => line.trim());
+
+        const results = { success: [], failed: [] };
         const seenEmails = new Set();
-        let currentEmail = null;
-        let currentPassword = null;
-        
+
         for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed || trimmed.startsWith('#')) continue;
-            
-            const emailMatch = trimmed.match(/^Email\s*:\s*(.+)$/i);
-            const passwordMatch = trimmed.match(/^Password\s*:\s*(.+)$/i);
-            
-            if (emailMatch) {
-                currentEmail = emailMatch[1].trim();
-            }
-            if (passwordMatch && currentEmail) {
-                currentPassword = passwordMatch[1].trim();
-                if (!seenEmails.has(currentEmail)) {
-                    accounts.push({ email: currentEmail, password: currentPassword });
-                    seenEmails.add(currentEmail);
-                }
-                currentEmail = null;
-                currentPassword = null;
-            }
-        }
 
-        const results = { success: [], failed: [] };
+            // Support: email:password or email:api_key
+            const parts = trimmed.split(':');
+            if (parts.length < 2) continue;
 
-        for (const account of accounts) {
+            const email = parts[0].trim();
+            const credential = parts[1].trim();
+
+            if (seenEmails.has(email)) continue;
+            seenEmails.add(email);
+
             try {
-                console.log(`📧 Registering: ${account.email}`);
-
-                // Signup
-                const signupRes = await axios.post(`${WEAVY_BASE_URL}/auth/signup`, {
-                    email: account.email,
-                    password: account.password,
-                    name: account.email.split('@')[0]
-                }, {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 30000
-                });
-
-                const token = signupRes.data.token || signupRes.data.apiKey;
-
-                // Get credits
-                const creditsRes = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
+                // Try onboarding credits endpoint
+                const response = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
                     { force: true },
                     {
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            'Authorization': `Bearer ${credential}`,
                             'Content-Type': 'application/json'
                         },
                         timeout: 30000
                     }
                 );
 
-                const credits = creditsRes.data.credits || 0;
-                console.log(`💰 Credits: ${credits}`);
+                const credits = response.data.credits || 0;
 
-                // Save to DB
                 const stmt = db.prepare(`
                     INSERT OR REPLACE INTO accounts (email, password, api_key, credit, status, last_sync)
                     VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
                 `);
-                stmt.run(account.email, account.password, token, credits);
+                stmt.run(email, credential, credential, credits);
                 stmt.finalize();
 
-                results.success.push({
-                    email: account.email,
-                    credits,
-                    status: 'registered'
-                });
+                results.success.push({ email, credits, status: 'active' });
 
             } catch (error) {
-                const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
-                console.error(`❌ Failed ${account.email}: ${errorMsg}`);
-                results.failed.push({
-                    email: account.email,
-                    error: errorMsg,
-                    status: error.response?.status || 'unknown'
-                });
+                const errorMsg = error.response?.data?.message || error.message;
+                results.failed.push({ email, error: errorMsg });
             }
         }
 
         fs.unlinkSync(filePath);
 
         res.json({
-            success: true,
-            message: `Processed ${accounts.length} accounts`,
+            success: results.success.length > 0,
+            message: `Processed ${lines.length} accounts`,
+            registered: results.success.length,
+            failed: results.failed.length,
             results
         });
 
     } catch (error) {
-        console.error('Auto-register error:', error);
+        console.error('Bulk login error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-let currentEmail = null;
-let currentPassword = null;
+// Get available workflows
+app.get('/api/workflows', (req, res) => {
+    db.all('SELECT * FROM workflows', (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json({ workflows: rows });
+    });
+});
+
+// Generate video via workflow (Kling Motion Control)
+app.post('/api/generate/video', upload.single('image'), async (req, res) => {
+    const { accountId, workflowId, motionStrength = 5, duration = 5 } = req.body;
+    
+    try {
+        // Get account
+        db.get('SELECT * FROM accounts WHERE id = ?', [accountId], async (err, account) => {
+            if (err || !account) {
+                return res.status(404).json({ error: 'Account not found' });
+            }
+
+            // Get workflow
+            db.get('SELECT * FROM workflows WHERE id = ?', [workflowId || 1], (err, workflow) => {
+                if (err || !workflow) {
+                    return res.status(404).json({ error: 'Workflow not found' });
+                }
+
+                const creditsNeeded = workflow.credits_cost || 123;
+
+                if (account.credit < creditsNeeded) {
+                    return res.status(400).json({ error: 'Insufficient credits' });
+                }
+
+                // Simulate Weavy workflow execution (Kling Motion Control)
+                // In production, this would call Weavy API with the workflow config
+                setTimeout(() => {
+                    // Deduct credits
+                    const newCredit = account.credit - creditsNeeded;
+                    db.run(`UPDATE accounts SET credit = ? WHERE id = ?`, [newCredit, accountId]);
+
+                    // Log usage
+                    db.run(`INSERT INTO usage_log (account_id, model, credits_used) VALUES (?, ?, ?)`,
+                        [accountId, 'Kling Motion Control', creditsNeeded]);
+
+                    // Return mock video URL (in production, this would be from Weavy)
+                    res.json({
+                        success: true,
+                        videoUrl: 'https://storage.weavy.ai/videos/sample_output.mp4',
+                        creditsUsed: creditsNeeded,
+                        remainingCredits: newCredit,
+                        workflow: workflow.name
+                    });
+                }, 3000); // Simulate 3s processing
+            });
+        });
+
+    } catch (error) {
+        console.error('Generate video error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-});// Trigger redeploy 15:19:29
+});

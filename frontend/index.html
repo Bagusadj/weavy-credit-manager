@@ -21,8 +21,8 @@
                 <a href="#" class="nav-item" data-section="accounts">
                     <span>👥</span> Akun
                 </a>
-                <a href="#" class="nav-item" data-section="generate">
-                    <span>🎨</span> Generate
+                <a href="#" class="nav-item" data-section="workflow">
+                    <span>🎬</span> Workflow
                 </a>
                 <a href="#" class="nav-item" data-section="history">
                     <span>📜</span> Riwayat
@@ -182,6 +182,62 @@
                         <div class="result-info">
                             <p>Kredit terpakai: <span id="usedCredits">0</span></p>
                             <p>Sisa kredit: <span id="remainingCredits">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workflow Section -->
+            <section id="workflow" class="section">
+                <div class="header">
+                    <h1>🎬 Kling Motion Control</h1>
+                    <span class="credits-badge">💰 <span id="workflowCredits">0</span> Kredit</span>
+                </div>
+
+                <div class="card">
+                    <h2>📥 Upload Input Image</h2>
+                    <div class="upload-area" id="imageUploadArea">
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                        <div class="upload-content">
+                            <span class="upload-icon">🖼️</span>
+                            <p>Drag & drop gambar atau klik untuk upload</p>
+                            <small>Format: JPG, PNG (max 5MB)</small>
+                        </div>
+                    </div>
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <img id="previewImg" src="" alt="Preview">
+                        <button id="removeImage" class="btn btn-secondary btn-sm">🗑️ Hapus</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>⚙️ Node Settings</h2>
+                    <div class="form-group">
+                        <label>Motion Strength (1-10)</label>
+                        <input type="range" id="motionStrength" min="1" max="10" value="5" step="1">
+                        <span id="motionValue">5</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (seconds)</label>
+                        <input type="number" id="duration" min="1" max="10" value="5" step="1">
+                    </div>
+                    <div class="form-actions">
+                        <button id="generateVideoBtn" class="btn btn-primary">
+                            🚀 Generate Video (💰 123 Kredit)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" id="videoResultCard" style="display: none;">
+                    <h2>🎬 Hasil Video</h2>
+                    <div class="result-video-container">
+                        <video id="resultVideo" controls style="width: 100%; max-width: 512px;">
+                            <source src="" type="video/mp4">
+                        </video>
+                        <div class="result-info">
+                            <p>Kredit terpakai: <span id="videoUsedCredits">0</span></p>
+                            <p>Sisa kredit: <span id="videoRemainingCredits">0</span></p>
+                            <a id="downloadLink" href="#" class="btn btn-secondary" download>⬇️ Download</a>
                         </div>
                     </div>
                 </div>
