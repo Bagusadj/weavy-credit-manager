@@ -1,0 +1,11 @@
+{
+  "name": "weavy-credit-manager-root",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd backend && npm install && npx playwright install chromium --with-deps",
+    "start": "cd backend && npm start"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
