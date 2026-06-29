@@ -143,6 +143,85 @@ fileInput.addEventListener('change', (e) => {
     if (file) handleFileUpload(file);
 });
 
+// Auto Register
+const registerArea = document.getElementById('registerArea');
+const registerFile = document.getElementById('registerFile');
+const registerProgress = document.getElementById('registerProgress');
+const registerResult = document.getElementById('registerResult');
+
+registerArea.addEventListener('click', () => registerFile.click());
+registerArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    registerArea.style.borderColor = 'var(--primary)';
+});
+
+registerArea.addEventListener('dragleave', () => {
+    registerArea.style.borderColor = 'var(--border)';
+});
+
+registerArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    registerArea.style.borderColor = 'var(--border)';
+    const file = e.dataTransfer.files[0];
+    if (file) handleRegister(file);
+});
+
+registerFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleRegister(file);
+});
+
+async function handleRegister(file) {
+    const formData = new FormData();
+    formData.append('accounts', file);
+
+    registerProgress.style.display = 'block';
+    registerResult.innerHTML = '<p>⏳ Registering...</p>';
+
+    try {
+        const response = await fetch(`${API_BASE}/accounts/auto-register`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        registerProgress.style.display = 'none';
+
+        if (result.success) {
+            const successCount = result.results.success?.length || 0;
+            const failedCount = result.results.failed?.length || 0;
+            
+            registerResult.innerHTML = `
+                <div class="result success">
+                    <h3>✅ Register Berhasil!</h3>
+                    <p>${result.message}</p>
+                    <p>Registered: ${successCount} akun</p>
+                    <p>Gagal: ${failedCount} akun</p>
+                </div>
+            `;
+
+            loadDashboardData();
+        } else {
+            registerResult.innerHTML = `
+                <div class="result error">
+                    <h3>❌ Register Gagal!</h3>
+                    <p>${result.error}</p>
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        registerProgress.style.display = 'none';
+        registerResult.innerHTML = `
+            <div class="result error">
+                <h3>❌ Register Gagal!</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
 async function handleFileUpload(file) {
     const formData = new FormData();
     formData.append('accounts', file);

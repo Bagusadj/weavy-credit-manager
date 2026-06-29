@@ -422,6 +422,110 @@ app.delete('/api/accounts/:id', (req, res) => {
     });
 });
 
+// Auto-register Weavy accounts
+app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const filePath = req.file.path;
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const lines = fileContent.split('\n').filter(line => line.trim());
+
+        const results = { success: [], failed: [] };
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('#')) continue;
+
+            // Parse Email : xxx / Password : xxx format
+            const emailMatch = trimmed.match(/^Email\s*:\s*(.+)$/i);
+            const passwordMatch = trimmed.match(/^Password\s*:\s*(.+)$/i);
+
+            if (emailMatch) {
+                currentEmail = emailMatch[1].trim();
+                continue;
+            }
+            if (passwordMatch) {
+                currentPassword = passwordMatch[1].trim();
+                
+                if (!currentEmail) continue;
+
+                try {
+                    console.log(`📧 Registering: ${currentEmail}`);
+
+                    // Signup
+                    const signupRes = await axios.post(`${WEAVY_BASE_URL}/auth/signup`, {
+                        email: currentEmail,
+                        password: currentPassword,
+                        name: currentEmail.split('@')[0]
+                    }, {
+                        headers: { 'Content-Type': 'application/json' },
+                        timeout: 30000
+                    });
+
+                    const token = signupRes.data.token || signupRes.data.apiKey;
+
+                    // Get credits
+                    const creditsRes = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
+                        { force: true },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout: 30000
+                        }
+                    );
+
+                    const credits = creditsRes.data.credits || 0;
+                    console.log(`💰 Credits: ${credits}`);
+
+                    // Save to DB
+                    const stmt = db.prepare(`
+                        INSERT OR REPLACE INTO accounts (email, password, api_key, credit, status, last_sync)
+                        VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
+                    `);
+                    stmt.run(currentEmail, currentPassword, token, credits);
+                    stmt.finalize();
+
+                    results.success.push({
+                        email: currentEmail,
+                        credits,
+                        status: 'registered'
+                    });
+
+                } catch (error) {
+                    console.error(`❌ Failed ${currentEmail}: ${error.message}`);
+                    results.failed.push({
+                        email: currentEmail,
+                        error: error.message
+                    });
+                }
+
+                currentEmail = null;
+                currentPassword = null;
+            }
+        }
+
+        fs.unlinkSync(filePath);
+
+        res.json({
+            success: true,
+            message: `Processed ${lines.length} accounts`,
+            results
+        });
+
+    } catch (error) {
+        console.error('Auto-register error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+let currentEmail = null;
+let currentPassword = null;
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
