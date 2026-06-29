@@ -75,22 +75,60 @@ app.post('/api/accounts/bulk-upload', upload.single('accounts'), async (req, res
             failed: []
         };
 
+        // Parse accounts - support multiple formats
+        const accounts = [];
+        let currentEmail = null;
+        let currentPassword = null;
+        let currentApiKey = null;
+
         for (const line of lines) {
-            // Support formats: email:password or email:password:api_key
-            const parts = line.trim().split(':');
-            if (parts.length < 2) continue;
+            const trimmed = line.trim();
+            
+            // Skip comments
+            if (trimmed.startsWith('#')) continue;
 
-            const email = parts[0];
-            const password = parts[1];
-            const apiKey = parts[2] || null;
+            // Format 1: "Email : xxx@gmail.com" / "Password : xxx"
+            const emailMatch = trimmed.match(/^Email\s*:\s*(.+)$/i);
+            const passwordMatch = trimmed.match(/^Password\s*:\s*(.+)$/i);
 
+            if (emailMatch) {
+                // Save previous account if exists
+                if (currentEmail && currentPassword) {
+                    accounts.push({ email: currentEmail, password: currentPassword, apiKey: currentApiKey });
+                }
+                currentEmail = emailMatch[1].trim();
+                currentPassword = null;
+                currentApiKey = null;
+            } else if (passwordMatch) {
+                currentPassword = passwordMatch[1].trim();
+            }
+            // Format 2: email:password or email:password:api_key (single line)
+            else if (trimmed.includes(':') && !trimmed.startsWith('Email') && !trimmed.startsWith('Password')) {
+                const parts = trimmed.split(':');
+                if (parts.length >= 2) {
+                    accounts.push({
+                        email: parts[0].trim(),
+                        password: parts[1].trim(),
+                        apiKey: parts[2] ? parts[2].trim() : null
+                    });
+                }
+            }
+        }
+
+        // Don't forget the last account
+        if (currentEmail && currentPassword) {
+            accounts.push({ email: currentEmail, password: currentPassword, apiKey: currentApiKey });
+        }
+
+        for (const account of accounts) {
             try {
                 // Get Weavy token
+                const auth = account.apiKey || account.password;
                 const response = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`, 
                     { force: true },
                     {
                         headers: {
-                            'Authorization': `Bearer ${apiKey || password}`,
+                            'Authorization': `Bearer ${auth}`,
                             'Content-Type': 'application/json'
                         }
                     }
@@ -104,19 +142,19 @@ app.post('/api/accounts/bulk-upload', upload.single('accounts'), async (req, res
                     VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
                 `);
                 
-                stmt.run(email, password, apiKey, credits);
+                stmt.run(account.email, account.password, account.apiKey, credits);
                 stmt.finalize();
 
                 results.success.push({
-                    email,
+                    email: account.email,
                     credits,
                     status: 'active'
                 });
 
             } catch (error) {
-                console.error(`Failed to login ${email}:`, error.message);
+                console.error(`Failed to login ${account.email}:`, error.message);
                 results.failed.push({
-                    email,
+                    email: account.email,
                     error: error.message
                 });
             }
