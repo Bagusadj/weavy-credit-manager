@@ -3,11 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weavy Credit Manager - Dashboard</title>
+    <title>MotionFly Clone - Weavy Automation</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="dashboard">
+    <!-- Login/Register Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <h2 id="authTitle">Masuk</h2>
+            <form id="authForm">
+                <input type="email" id="authEmail" placeholder="Email" required>
+                <input type="password" id="authPassword" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" id="authSubmitBtn">Masuk</button>
+            </form>
+            <p class="auth-toggle">
+                <span id="authToggleText">Belum punya akun?</span>
+                <a href="#" id="authToggleLink">Daftar</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboard" style="display: none;">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
@@ -54,7 +70,7 @@
                                         <div class="stat-icon">✅</div>
                                         <div class="stat-info">
                                             <h3 id="activeAccounts">0</h3>
-                                            <p>Akun Aktif</p>
+                                            <p>Akun Weavy</p>
                                         </div>
                                     </div>
                                     <div class="stat-card">
@@ -66,7 +82,21 @@
                                     </div>
                                 </div>
 
-                                <!-- Login Section -->
+                                <!-- Connect Weavy Account -->
+                                <div class="card">
+                                    <h2>🔗 Connect Weavy Account</h2>
+                                    <p>Hubungkan akun Weavy untuk mulai generate</p>
+                                    <button id="connectWeavyBtn" class="btn btn-primary">
+                                        🔗 Connect Weavy Account
+                                    </button>
+                                    <div id="connectProgress" class="progress" style="display: none;">
+                                        <div class="progress-bar"></div>
+                                        <p>Opening Weavy login... Complete login di popup, akan auto-save setelah selesai.</p>
+                                    </div>
+                                    <div id="connectResult" class="result"></div>
+                                </div>
+
+                                <!-- Kling Workflow Section -->
                                 <div class="card">
                                     <h2>🔐 Login Weavy (Google OAuth)</h2>
                                     <div class="form-group">

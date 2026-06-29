@@ -29,16 +29,26 @@ const db = new sqlite3.Database(dbPath);
 
 // Initialize database
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS accounts (
+    // Users table for web app auth
+    db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE,
         password TEXT,
-        api_key TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Weavy accounts with session storage
+    db.run(`CREATE TABLE IF NOT EXISTS accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        email TEXT,
+        password TEXT,
         session_cookie TEXT,
         credit INTEGER DEFAULT 0,
         status TEXT DEFAULT 'inactive',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        last_sync DATETIME
+        last_sync DATETIME,
+        FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS workflows (
@@ -74,7 +84,103 @@ db.serialize(() => {
 // Weavy API Configuration
 const WEAVY_BASE_URL = 'https://api.weavy.ai';
 
-// Login with Google OAuth (via Playwright)
+// ─── USER AUTH ───────────────────────────────────────────────────────────────
+app.post('/api/auth/register', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
+    
+    db.run('INSERT INTO users (email, password) VALUES (?, ?)', [email, password], function(err) {
+        if (err) return res.status(400).json({ error: 'Email already exists' });
+        res.json({ success: true, userId: this.lastID });
+    });
+});
+
+app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body;
+    db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, user) => {
+        if (err || !user) return res.status(401).json({ error: 'Invalid credentials' });
+        res.json({ success: true, userId: user.id, email: user.email });
+    });
+});
+
+// ─── WEAVY OAUTH FLOW ─────────────────────────────────────────────────────────
+app.post('/api/accounts/connect', async (req, res) => {
+    const { userId, email, password } = req.body;
+    
+    let browser;
+    try {
+        browser = await chromium.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled']
+        });
+        const context = await browser.newContext({
+            viewport: { width: 1920, height: 1080 }
+        });
+        const page = await context.newPage();
+        
+        // Navigate to Weavy
+        await page.goto('https://app.weavy.ai/', { waitUntil: 'networkidle', timeout: 30000 });
+        await page.waitForTimeout(2000);
+        
+        // Click "Log in with Google"
+        await page.click('button:has-text("Log in with Google")', { timeout: 10000 });
+        await page.waitForTimeout(3000);
+        
+        // Check if already logged in (dashboard) or need to login
+        const isDashboard = await page.url().includes('/dashboard');
+        
+        if (!isDashboard) {
+            // Google login page - wait for user to complete manually
+            console.log('Waiting for manual Google login...');
+            
+            // Wait for navigation after login (max 5 minutes)
+            await page.waitForFunction(() => window.location.href.includes('app.weavy.ai'), { timeout: 300000 });
+            await page.waitForTimeout(5000);
+        }
+        
+        // Extract session cookies
+        const cookies = await context.cookies();
+        const sessionCookie = JSON.stringify(cookies);
+        
+        // Get credits from onboarding endpoint
+        let credits = 0;
+        try {
+            const creditsRes = await page.evaluate(async () => {
+                const res = await fetch('https://api.weavy.ai/users/onboarding-credits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ force: true })
+                });
+                const data = await res.json();
+                return data.credits || 0;
+            });
+            credits = creditsRes;
+        } catch (e) {
+            console.log('Credits fetch failed:', e.message);
+        }
+        
+        await browser.close();
+        
+        // Save account
+        db.run(`
+            INSERT INTO accounts (user_id, email, password, session_cookie, credit, status, last_sync)
+            VALUES (?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
+        `, [userId, email, password, sessionCookie, credits], function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to save account' });
+            res.json({ 
+                success: true, 
+                accountId: this.lastID,
+                email,
+                credits
+            });
+        });
+        
+    } catch (error) {
+        if (browser) await browser.close();
+        console.error('OAuth error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 app.post('/api/accounts/login', async (req, res) => {
     const { email, password } = req.body;
     
