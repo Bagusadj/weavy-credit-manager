@@ -411,3 +411,57 @@ textarea:focus {
         grid-template-columns: 1fr;
     }
 }
+/* Workflow Nodes */
+.workflow-nodes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.node-card {
+    background: var(--bg-dark);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: border-color 0.3s;
+}
+
+.node-card:hover {
+    border-color: var(--primary);
+}
+
+.node-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.node-card input[type="file"],
+.node-card select,
+.node-card textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+}
+
+.node-card .range-value {
+    text-align: right;
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.input-node { border-left: 4px solid #4CAF50; }
+.model-node { border-left: 4px solid #2196F3; }
+.output-node { border-left: 4px solid #FF9800; }
+
+.btn-large {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}

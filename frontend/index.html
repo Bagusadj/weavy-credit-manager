@@ -66,38 +66,96 @@
                                     </div>
                                 </div>
 
-                                <!-- Recent Accounts -->
-                <div class="card">
-                    <h2>🎬 Kling Motion Control</h2>
-                    <p class="credits-cost">💰 123 Kredit per generate</p>
+                                <!-- Kling Workflow Section -->
+                                                <div class="card">
+                                                    <h2>🎬 Kling Motion Control</h2>
+                                                    <p class="credits-cost">💰 123 Kredit per generate</p>
                     
-                    <div class="form-group">
-                        <label>Input Image</label>
-                        <input type="file" id="klingImage" accept="image/*">
-                    </div>
+                                                    <div class="workflow-nodes">
+                                                        <!-- Input Node -->
+                                                        <div class="node-card input-node">
+                                                            <h3>📥 Input</h3>
+                                                            <div class="node-content">
+                                                                <label>Input Type</label>
+                                                                <select id="inputType">
+                                                                    <option value="image">Image</option>
+                                                                    <option value="text">Text Prompt</option>
+                                                                    <option value="video">Video (First Frame)</option>
+                                                                </select>
+                                
+                                                                <div id="imageInputSection">
+                                                                    <label>Upload Image</label>
+                                                                    <input type="file" id="klingImage" accept="image/*">
+                                                                </div>
+                                
+                                                                <div id="textInputSection" style="display:none;">
+                                                                    <label>Text Prompt</label>
+                                                                    <textarea id="textPrompt" rows="3" placeholder="Describe the scene..."></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                        
+                                                        <!-- Model Node -->
+                                                        <div class="node-card model-node">
+                                                            <h3>🤖 Model Settings</h3>
+                                                            <div class="node-content">
+                                                                <label>Motion Strength</label>
+                                                                <input type="range" id="motionStrength" min="1" max="10" value="5">
+                                                                <div class="range-value"><span id="motionValue">5</span>/10</div>
+                                
+                                                                <label>Duration</label>
+                                                                <select id="duration">
+                                                                    <option value="5">5 seconds</option>
+                                                                    <option value="10">10 seconds</option>
+                                                                </select>
+                                
+                                                                <label>Resolution</label>
+                                                                <select id="resolution">
+                                                                    <option value="720p">720p (HD)</option>
+                                                                    <option value="1080p">1080p (FHD)</option>
+                                                                </select>
+                                
+                                                                <label>FPS</label>
+                                                                <select id="fps">
+                                                                    <option value="24">24 fps</option>
+                                                                    <option value="30">30 fps</option>
+                                                                    <option value="60">60 fps</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                        
+                                                        <!-- Output Node -->
+                                                        <div class="node-card output-node">
+                                                            <h3>📤 Output</h3>
+                                                            <div class="node-content">
+                                                                <label>Format</label>
+                                                                <select id="outputFormat">
+                                                                    <option value="mp4">MP4</option>
+                                                                    <option value="webm">WebM</option>
+                                                                    <option value="gif">GIF</option>
+                                                                </select>
+                                
+                                                                <label>Quality</label>
+                                                                <select id="outputQuality">
+                                                                    <option value="high">High</option>
+                                                                    <option value="medium">Medium</option>
+                                                                    <option value="low">Low (faster)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                     
-                    <div class="form-group">
-                        <label>Motion Strength (1-10)</label>
-                        <input type="range" id="motionStrength" min="1" max="10" value="5">
-                        <span id="motionValue">5</span>
-                    </div>
+                                                    <button id="klingGenerateBtn" class="btn btn-primary btn-large">
+                                                        🚀 Generate Video (123 Credits)
+                                                    </button>
                     
-                    <div class="form-group">
-                        <label>Duration (seconds)</label>
-                        <input type="number" id="duration" min="1" max="10" value="5">
-                    </div>
+                                                    <div id="klingProgress" class="progress" style="display: none;">
+                                                        <div class="progress-bar"></div>
+                                                        <p>Generating... (this may take 2-5 minutes)</p>
+                                                    </div>
                     
-                    <button id="klingGenerateBtn" class="btn btn-primary">
-                        🚀 Generate Video
-                    </button>
-                    
-                    <div id="klingProgress" class="progress" style="display: none;">
-                        <div class="progress-bar"></div>
-                        <p>Generating... (this may take 2-5 minutes)</p>
-                    </div>
-                    
-                    <div id="klingResult" class="result"></div>
-                </div>
+                                                    <div id="klingResult" class="result"></div>
+                                                </div>
 
                 <!-- Recent Accounts -->
                 <div class="card">

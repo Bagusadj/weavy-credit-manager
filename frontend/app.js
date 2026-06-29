@@ -651,3 +651,101 @@ document.getElementById('generateVideoBtn').addEventListener('click', async () =
 
 // Initial load
 loadDashboardData();
+
+// Kling Workflow - Input Type Toggle
+const inputTypeSelect = document.getElementById('inputType');
+const imageInputSection = document.getElementById('imageInputSection');
+const textInputSection = document.getElementById('textInputSection');
+
+if (inputTypeSelect) {
+    inputTypeSelect.addEventListener('change', () => {
+        const type = inputTypeSelect.value;
+        if (type === 'image' || type === 'video') {
+            imageInputSection.style.display = 'block';
+            textInputSection.style.display = 'none';
+        } else if (type === 'text') {
+            imageInputSection.style.display = 'none';
+            textInputSection.style.display = 'block';
+        }
+    });
+}
+
+// Motion Strength Display
+const motionStrength = document.getElementById('motionStrength');
+const motionValue = document.getElementById('motionValue');
+if (motionStrength && motionValue) {
+    motionStrength.addEventListener('input', () => {
+        motionValue.textContent = motionStrength.value;
+    });
+}
+
+// Kling Generate Button
+const klingGenerateBtn = document.getElementById('klingGenerateBtn');
+if (klingGenerateBtn) {
+    klingGenerateBtn.addEventListener('click', async () => {
+        const inputType = document.getElementById('inputType')?.value || 'image';
+        const motionStrength = document.getElementById('motionStrength')?.value || 5;
+        const duration = document.getElementById('duration')?.value || 5;
+        const resolution = document.getElementById('resolution')?.value || '720p';
+        const fps = document.getElementById('fps')?.value || 24;
+        const outputFormat = document.getElementById('outputFormat')?.value || 'mp4';
+        const outputQuality = document.getElementById('outputQuality')?.value || 'high';
+        
+        // Get best account
+        const accountsRes = await fetch(`${API_BASE}/accounts`);
+        const accountsData = await accountsRes.json();
+        const bestAccount = accountsData.accounts.find(a => a.credit >= 123 && a.status === 'active');
+        
+        if (!bestAccount) {
+            alert('❌ No account with enough credits (need 123)');
+            return;
+        }
+        
+        // Prepare payload
+        const payload = {
+            accountId: bestAccount.id,
+            model: 'kling-motion-control',
+            credits: 123,
+            settings: {
+                inputType,
+                motionStrength: parseInt(motionStrength),
+                duration: parseInt(duration),
+                resolution,
+                fps: parseInt(fps),
+                outputFormat,
+                outputQuality
+            }
+        };
+        
+        // Handle file upload if image/video
+        if (inputType === 'image' || inputType === 'video') {
+            const fileInput = document.getElementById('klingImage');
+            if (fileInput && fileInput.files[0]) {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('data', JSON.stringify(payload));
+                
+                // TODO: Implement file upload endpoint
+                alert('📤 File upload - Backend endpoint needed');
+                console.log('Payload:', payload);
+                return;
+            } else {
+                alert('Please select an image file');
+                return;
+            }
+        }
+        
+        // Text prompt
+        if (inputType === 'text') {
+            const textPrompt = document.getElementById('textPrompt')?.value;
+            if (!textPrompt) {
+                alert('Please enter a text prompt');
+                return;
+            }
+            payload.settings.textPrompt = textPrompt;
+        }
+        
+        console.log('Generate Kling:', payload);
+        alert('🚀 Generate started! (Backend endpoint needed)\n\nSettings:\n' + JSON.stringify(payload.settings, null, 2));
+    });
+}
