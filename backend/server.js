@@ -431,81 +431,84 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
 
         const filePath = req.file.path;
         const fileContent = fs.readFileSync(filePath, 'utf-8');
-        const lines = fileContent.split('\n').filter(line => line.trim());
+        const lines = fileContent.split('\n');
+        
+        // Parse into account pairs
+        const accounts = [];
+        let currentEmail = null;
+        let currentPassword = null;
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            
+            const emailMatch = trimmed.match(/^Email\s*:\s*(.+)$/i);
+            const passwordMatch = trimmed.match(/^Password\s*:\s*(.+)$/i);
+            
+            if (emailMatch) {
+                currentEmail = emailMatch[1].trim();
+            }
+            if (passwordMatch && currentEmail) {
+                currentPassword = passwordMatch[1].trim();
+                accounts.push({ email: currentEmail, password: currentPassword });
+                currentEmail = null;
+                currentPassword = null;
+            }
+        }
 
         const results = { success: [], failed: [] };
 
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('#')) continue;
+        for (const account of accounts) {
+            try {
+                console.log(`📧 Registering: ${account.email}`);
 
-            // Parse Email : xxx / Password : xxx format
-            const emailMatch = trimmed.match(/^Email\s*:\s*(.+)$/i);
-            const passwordMatch = trimmed.match(/^Password\s*:\s*(.+)$/i);
+                // Signup
+                const signupRes = await axios.post(`${WEAVY_BASE_URL}/auth/signup`, {
+                    email: account.email,
+                    password: account.password,
+                    name: account.email.split('@')[0]
+                }, {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 30000
+                });
 
-            if (emailMatch) {
-                currentEmail = emailMatch[1].trim();
-                continue;
-            }
-            if (passwordMatch) {
-                currentPassword = passwordMatch[1].trim();
-                
-                if (!currentEmail) continue;
+                const token = signupRes.data.token || signupRes.data.apiKey;
 
-                try {
-                    console.log(`📧 Registering: ${currentEmail}`);
-
-                    // Signup
-                    const signupRes = await axios.post(`${WEAVY_BASE_URL}/auth/signup`, {
-                        email: currentEmail,
-                        password: currentPassword,
-                        name: currentEmail.split('@')[0]
-                    }, {
-                        headers: { 'Content-Type': 'application/json' },
+                // Get credits
+                const creditsRes = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
+                    { force: true },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
                         timeout: 30000
-                    });
+                    }
+                );
 
-                    const token = signupRes.data.token || signupRes.data.apiKey;
+                const credits = creditsRes.data.credits || 0;
+                console.log(`💰 Credits: ${credits}`);
 
-                    // Get credits
-                    const creditsRes = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
-                        { force: true },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            timeout: 30000
-                        }
-                    );
+                // Save to DB
+                const stmt = db.prepare(`
+                    INSERT OR REPLACE INTO accounts (email, password, api_key, credit, status, last_sync)
+                    VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
+                `);
+                stmt.run(account.email, account.password, token, credits);
+                stmt.finalize();
 
-                    const credits = creditsRes.data.credits || 0;
-                    console.log(`💰 Credits: ${credits}`);
+                results.success.push({
+                    email: account.email,
+                    credits,
+                    status: 'registered'
+                });
 
-                    // Save to DB
-                    const stmt = db.prepare(`
-                        INSERT OR REPLACE INTO accounts (email, password, api_key, credit, status, last_sync)
-                        VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
-                    `);
-                    stmt.run(currentEmail, currentPassword, token, credits);
-                    stmt.finalize();
-
-                    results.success.push({
-                        email: currentEmail,
-                        credits,
-                        status: 'registered'
-                    });
-
-                } catch (error) {
-                    console.error(`❌ Failed ${currentEmail}: ${error.message}`);
-                    results.failed.push({
-                        email: currentEmail,
-                        error: error.message
-                    });
-                }
-
-                currentEmail = null;
-                currentPassword = null;
+            } catch (error) {
+                console.error(`❌ Failed ${account.email}: ${error.message}`);
+                results.failed.push({
+                    email: account.email,
+                    error: error.message
+                });
             }
         }
 
@@ -513,7 +516,7 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
 
         res.json({
             success: true,
-            message: `Processed ${lines.length} accounts`,
+            message: `Processed ${accounts.length} accounts`,
             results
         });
 
