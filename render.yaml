@@ -2,15 +2,16 @@ services:
   - type: web
     name: weavy-credit-manager
     env: node
+    region: singapore
     plan: free
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
     envVars:
-      - key: PORT
-        value: 3000
       - key: NODE_ENV
         value: production
-    disk:
-      name: data
-      mountPath: /opt/render/project/backend/data
-      sizeGB: 1
+      - key: PORT
+        value: 3000
+    disks:
+      - name: data
+        mountPath: /opt/render/project/backend/data
+        sizeGB: 1
