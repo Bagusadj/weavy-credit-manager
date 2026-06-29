@@ -11,7 +11,7 @@ services:
         value: production
       - key: PORT
         value: 3000
-    disks:
-      - name: data
-        mountPath: /opt/render/project/backend/data
-        sizeGB: 1
+    disk:
+      name: data
+      mountPath: /opt/render/project/backend/data
+      sizeGB: 1
