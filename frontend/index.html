@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weavy Credit Manager - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>💎 Credit Manager</h2>
+                <p>Weavy Bulk Login</p>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-section="dashboard">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-section="accounts">
+                    <span>👥</span> Akun
+                </a>
+                <a href="#" class="nav-item" data-section="generate">
+                    <span>🎨</span> Generate
+                </a>
+                <a href="#" class="nav-item" data-section="history">
+                    <span>📜</span> Riwayat
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="header">
+                    <h1>Dashboard Overview</h1>
+                    <button id="syncAllBtn" class="btn btn-primary">
+                        🔄 Sync Semua Akun
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3 id="totalCredits">0</h3>
+                            <p>Total Kredit</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="activeAccounts">0</h3>
+                            <p>Akun Aktif</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="totalAccounts">0</h3>
+                            <p>Total Akun</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="card">
+                    <h2>📤 Upload Akun Bulk</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="accountsFile" accept=".txt" style="display: none;">
+                        <div class="upload-content">
+                            <span class="upload-icon">📁</span>
+                            <p>Drag & drop file .txt atau klik untuk upload</p>
+                            <small>Format: email:password atau email:password:api_key</small>
+                        </div>
+                    </div>
+                    <div id="uploadProgress" class="progress" style="display: none;">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <div id="uploadResult" class="result"></div>
+                </div>
+
+                <!-- Recent Accounts -->
+                <div class="card">
+                    <h2>👥 Akun Teratas</h2>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Kredit</th>
+                                    <th>Status</th>
+                                    <th>Last Sync</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentAccountsTable">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Section -->
+            <section id="accounts" class="section">
+                <div class="header">
+                    <h1>Daftar Akun</h1>
+                    <button id="refreshAccountsBtn" class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Kredit</th>
+                                    <th>Status</th>
+                                    <th>Last Sync</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTable">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Generate Section -->
+            <section id="generate" class="section">
+                <div class="header">
+                    <h1>Generate Gambar</h1>
+                    <span class="credits-badge">💰 <span id="generateCredits">0</span> Kredit</span>
+                </div>
+
+                <div class="card">
+                    <h2>🎨 Pilih Model</h2>
+                    <div class="models-grid" id="modelsGrid">
+                        <!-- Models will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>✍️ Prompt</h2>
+                    <textarea id="promptInput" placeholder="Masukkan deskripsi gambar..." rows="5"></textarea>
+                    <div class="form-actions">
+                        <button id="generateBtn" class="btn btn-primary">
+                            🚀 Generate
+                        </button>
+                        <span class="credits-cost">💰 <span id="costDisplay">10</span> Kredit</span>
+                    </div>
+                </div>
+
+                <div class="card" id="resultCard" style="display: none;">
+                    <h2>🖼️ Hasil Generate</h2>
+                    <div class="result-image-container">
+                        <img id="resultImage" src="" alt="Generated Image">
+                        <div class="result-info">
+                            <p>Kredit terpakai: <span id="usedCredits">0</span></p>
+                            <p>Sisa kredit: <span id="remainingCredits">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="history" class="section">
+                <div class="header">
+                    <h1>Riwayat Penggunaan</h1>
+                </div>
+
+                <div class="card">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Model</th>
+                                    <th>Kredit</th>
+                                    <th>Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

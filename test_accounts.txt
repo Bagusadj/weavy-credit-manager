@@ -1,0 +1,6 @@
+# Sample Weavy Accounts
+# Format: email:password or email:password:api_key
+
+test1@example.com:password123
+test2@example.com:password456:sample_api_key_123
+test3@example.com:password789

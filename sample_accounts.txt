@@ -1,0 +1,10 @@
+# Sample accounts file for testing
+# Format: email:password atau email:password:api_key
+
+# Contoh akun (ganti dengan akun asli Anda)
+test1@example.com:password123
+test2@example.com:password456
+test3@example.com:password789
+
+# Format dengan API key (jika ada)
+# user4@example.com:password:abc123def456ghi789
