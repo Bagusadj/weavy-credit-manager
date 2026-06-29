@@ -443,8 +443,104 @@ function formatDate(dateString) {
     });
 }
 
-// ── Workflow Section (Kling Motion Control) ────────────────────────────────
-let selectedImage = null;
+// Kling Motion Strength Slider
+const motionSlider = document.getElementById('motionStrength');
+const motionValue = document.getElementById('motionValue');
+if (motionSlider && motionValue) {
+    motionSlider.addEventListener('input', () => {
+        motionValue.textContent = motionSlider.value;
+    });
+}
+
+// Kling Generate
+const klingBtn = document.getElementById('klingGenerateBtn');
+if (klingBtn) {
+    klingBtn.addEventListener('click', async () => {
+        const imageInput = document.getElementById('klingImage');
+        const motionStrength = document.getElementById('motionStrength').value;
+        const duration = document.getElementById('duration').value;
+        const progress = document.getElementById('klingProgress');
+        const result = document.getElementById('klingResult');
+        
+        if (!imageInput.files[0]) {
+            alert('Pilih gambar dulu!');
+            return;
+        }
+        
+        // Get best account
+        try {
+            const accResponse = await fetch(`${API_BASE}/accounts`);
+            const accData = await accResponse.json();
+            const bestAccount = accData.accounts.find(a => a.credit >= 123 && a.status === 'active');
+            
+            if (!bestAccount) {
+                alert('Tidak ada akun dengan kredit cukup (min 123)!');
+                return;
+            }
+            
+            progress.style.display = 'block';
+            result.innerHTML = '';
+            
+            // Upload image first
+            const formData = new FormData();
+            formData.append('image', imageInput.files[0]);
+            
+            const uploadRes = await fetch(`${API_BASE}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            
+            // Call Kling workflow
+            const klingRes = await fetch(`${API_BASE}/workflows/kling-generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accountId: bestAccount.id,
+                    imageUrl: uploadData.url,
+                    motionStrength: parseInt(motionStrength),
+                    duration: parseInt(duration)
+                })
+            });
+            
+            const klingData = await klingRes.json();
+            
+            progress.style.display = 'none';
+            
+            if (klingData.success) {
+                result.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ Video Generated!</h3>
+                        <video controls width="100%">
+                            <source src="${klingData.videoUrl}" type="video/mp4">
+                        </video>
+                        <p>Kredit terpakai: 123</p>
+                        <p>Sisa kredit: ${klingData.remainingCredits}</p>
+                    </div>
+                `;
+                loadDashboardData();
+            } else {
+                result.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Failed!</h3>
+                        <p>${klingData.error}</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            progress.style.display = 'none';
+            result.innerHTML = `
+                <div class="result error">
+                    <h3>❌ Error!</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    });
+}
+
+// Initial load
+loadDashboardData();
 let selectedWorkflowId = 1;
 
 // Image upload
