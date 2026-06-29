@@ -12,7 +12,7 @@
         <aside class="sidebar">
             <div class="logo">
                 <h2>💎 Credit Manager</h2>
-                <p>Weavy Bulk Login</p>
+                <p>Weavy Automation</p>
             </div>
             <nav class="nav">
                 <a href="#" class="nav-item active" data-section="dashboard">
@@ -21,8 +21,8 @@
                 <a href="#" class="nav-item" data-section="accounts">
                     <span>👥</span> Akun
                 </a>
-                <a href="#" class="nav-item" data-section="workflow">
-                    <span>🎬</span> Workflow
+                <a href="#" class="nav-item" data-section="kling">
+                    <span>🎬</span> Kling AI
                 </a>
                 <a href="#" class="nav-item" data-section="history">
                     <span>📜</span> Riwayat
@@ -42,120 +42,51 @@
                 </div>
 
                 <!-- Stats Cards -->
-                                <div class="stats-grid">
-                                    <div class="stat-card">
-                                        <div class="stat-icon">💰</div>
-                                        <div class="stat-info">
-                                            <h3 id="totalCredits">0</h3>
-                                            <p>Total Kredit</p>
-                                        </div>
-                                    </div>
-                                    <div class="stat-card">
-                                        <div class="stat-icon">✅</div>
-                                        <div class="stat-info">
-                                            <h3 id="activeAccounts">0</h3>
-                                            <p>Akun Aktif</p>
-                                        </div>
-                                    </div>
-                                    <div class="stat-card">
-                                        <div class="stat-icon">📊</div>
-                                        <div class="stat-info">
-                                            <h3 id="totalAccounts">0</h3>
-                                            <p>Total Akun</p>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3 id="totalCredits">0</h3>
+                            <p>Total Kredit</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="activeAccounts">0</h3>
+                            <p>Akun Aktif</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <h3 id="totalAccounts">0</h3>
+                            <p>Total Akun</p>
+                        </div>
+                    </div>
+                </div>
 
-                                <!-- Kling Workflow Section -->
-                                                <div class="card">
-                                                    <h2>🎬 Kling Motion Control</h2>
-                                                    <p class="credits-cost">💰 123 Kredit per generate</p>
-                    
-                                                    <div class="workflow-nodes">
-                                                        <!-- Input Node -->
-                                                        <div class="node-card input-node">
-                                                            <h3>📥 Input</h3>
-                                                            <div class="node-content">
-                                                                <label>Input Type</label>
-                                                                <select id="inputType">
-                                                                    <option value="image">Image</option>
-                                                                    <option value="text">Text Prompt</option>
-                                                                    <option value="video">Video (First Frame)</option>
-                                                                </select>
-                                
-                                                                <div id="imageInputSection">
-                                                                    <label>Upload Image</label>
-                                                                    <input type="file" id="klingImage" accept="image/*">
-                                                                </div>
-                                
-                                                                <div id="textInputSection" style="display:none;">
-                                                                    <label>Text Prompt</label>
-                                                                    <textarea id="textPrompt" rows="3" placeholder="Describe the scene..."></textarea>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                        
-                                                        <!-- Model Node -->
-                                                        <div class="node-card model-node">
-                                                            <h3>🤖 Model Settings</h3>
-                                                            <div class="node-content">
-                                                                <label>Motion Strength</label>
-                                                                <input type="range" id="motionStrength" min="1" max="10" value="5">
-                                                                <div class="range-value"><span id="motionValue">5</span>/10</div>
-                                
-                                                                <label>Duration</label>
-                                                                <select id="duration">
-                                                                    <option value="5">5 seconds</option>
-                                                                    <option value="10">10 seconds</option>
-                                                                </select>
-                                
-                                                                <label>Resolution</label>
-                                                                <select id="resolution">
-                                                                    <option value="720p">720p (HD)</option>
-                                                                    <option value="1080p">1080p (FHD)</option>
-                                                                </select>
-                                
-                                                                <label>FPS</label>
-                                                                <select id="fps">
-                                                                    <option value="24">24 fps</option>
-                                                                    <option value="30">30 fps</option>
-                                                                    <option value="60">60 fps</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                        
-                                                        <!-- Output Node -->
-                                                        <div class="node-card output-node">
-                                                            <h3>📤 Output</h3>
-                                                            <div class="node-content">
-                                                                <label>Format</label>
-                                                                <select id="outputFormat">
-                                                                    <option value="mp4">MP4</option>
-                                                                    <option value="webm">WebM</option>
-                                                                    <option value="gif">GIF</option>
-                                                                </select>
-                                
-                                                                <label>Quality</label>
-                                                                <select id="outputQuality">
-                                                                    <option value="high">High</option>
-                                                                    <option value="medium">Medium</option>
-                                                                    <option value="low">Low (faster)</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                    
-                                                    <button id="klingGenerateBtn" class="btn btn-primary btn-large">
-                                                        🚀 Generate Video (123 Credits)
-                                                    </button>
-                    
-                                                    <div id="klingProgress" class="progress" style="display: none;">
-                                                        <div class="progress-bar"></div>
-                                                        <p>Generating... (this may take 2-5 minutes)</p>
-                                                    </div>
-                    
-                                                    <div id="klingResult" class="result"></div>
-                                                </div>
+                <!-- Add Account Section -->
+                <div class="card">
+                    <h2>➕ Tambah Akun Weavy</h2>
+                    <p style="color: #888; font-size: 14px; margin-bottom: 15px;">
+                        Login manual di <a href="https://app.weavy.ai" target="_blank">app.weavy.ai</a>, lalu copy session cookie dari browser DevTools.
+                    </p>
+                    <div class="form-group">
+                        <label>Email Weavy</label>
+                        <input type="email" id="addEmail" placeholder="user@zenoid.xyz" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (optional)</label>
+                        <input type="password" id="addPassword" placeholder="••••••••" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Session Cookie (dari DevTools → Application → Cookies)</label>
+                        <textarea id="addSessionCookie" placeholder="session=xxx; auth=yyy; ..." rows="3" style="width: 100%; padding: 10px; margin-bottom: 10px;"></textarea>
+                    </div>
+                    <button id="addAccountBtn" class="btn btn-primary">💾 Simpan Akun</button>
+                    <div id="addResult" class="result" style="margin-top: 15px;"></div>
+                </div>
 
                 <!-- Recent Accounts -->
                 <div class="card">
@@ -171,7 +102,6 @@
                                 </tr>
                             </thead>
                             <tbody id="recentAccountsTable">
-                                <!-- Data will be loaded here -->
                             </tbody>
                         </table>
                     </div>
@@ -186,7 +116,6 @@
                         🔄 Refresh
                     </button>
                 </div>
-
                 <div class="card">
                     <div class="table-container">
                         <table class="table">
@@ -199,102 +128,58 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="accountsTable">
-                                <!-- Data will be loaded here -->
-                            </tbody>
+                            <tbody id="accountsTable"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- Generate Section -->
-            <section id="generate" class="section">
-                <div class="header">
-                    <h1>Generate Gambar</h1>
-                    <span class="credits-badge">💰 <span id="generateCredits">0</span> Kredit</span>
-                </div>
-
-                <div class="card">
-                    <h2>🎨 Pilih Model</h2>
-                    <div class="models-grid" id="modelsGrid">
-                        <!-- Models will be loaded here -->
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>✍️ Prompt</h2>
-                    <textarea id="promptInput" placeholder="Masukkan deskripsi gambar..." rows="5"></textarea>
-                    <div class="form-actions">
-                        <button id="generateBtn" class="btn btn-primary">
-                            🚀 Generate
-                        </button>
-                        <span class="credits-cost">💰 <span id="costDisplay">10</span> Kredit</span>
-                    </div>
-                </div>
-
-                <div class="card" id="resultCard" style="display: none;">
-                    <h2>🖼️ Hasil Generate</h2>
-                    <div class="result-image-container">
-                        <img id="resultImage" src="" alt="Generated Image">
-                        <div class="result-info">
-                            <p>Kredit terpakai: <span id="usedCredits">0</span></p>
-                            <p>Sisa kredit: <span id="remainingCredits">0</span></p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Workflow Section -->
-            <section id="workflow" class="section">
+            <!-- Kling AI Section -->
+            <section id="kling" class="section">
                 <div class="header">
                     <h1>🎬 Kling Motion Control</h1>
-                    <span class="credits-badge">💰 <span id="workflowCredits">0</span> Kredit</span>
+                    <span class="credits-badge">💰 <span id="klingCredits">0</span> Kredit</span>
                 </div>
 
                 <div class="card">
-                    <h2>📥 Upload Input Image</h2>
-                    <div class="upload-area" id="imageUploadArea">
-                        <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                        <div class="upload-content">
-                            <span class="upload-icon">🖼️</span>
-                            <p>Drag & drop gambar atau klik untuk upload</p>
-                            <small>Format: JPG, PNG (max 5MB)</small>
-                        </div>
+                    <h2>⚙️ Settings</h2>
+                    <div class="form-group">
+                        <label>Pilih Akun</label>
+                        <select id="klingAccount" style="width: 100%; padding: 10px; margin-bottom: 15px;">
+                            <option value="">-- Pilih Akun --</option>
+                        </select>
                     </div>
-                    <div id="imagePreview" class="image-preview" style="display: none;">
-                        <img id="previewImg" src="" alt="Preview">
-                        <button id="removeImage" class="btn btn-secondary btn-sm">🗑️ Hapus</button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>⚙️ Node Settings</h2>
+                    
                     <div class="form-group">
                         <label>Motion Strength (1-10)</label>
-                        <input type="range" id="motionStrength" min="1" max="10" value="5" step="1">
-                        <span id="motionValue">5</span>
+                        <input type="range" id="motionStrength" min="1" max="10" value="5" style="width: 100%;">
+                        <div style="text-align: center; font-weight: bold;" id="motionValue">5</div>
                     </div>
+
                     <div class="form-group">
-                        <label>Duration (seconds)</label>
-                        <input type="number" id="duration" min="1" max="10" value="5" step="1">
+                        <label>Duration (seconds, 1-10)</label>
+                        <input type="number" id="duration" min="1" max="10" value="5" style="width: 100%; padding: 10px;">
                     </div>
-                    <div class="form-actions">
-                        <button id="generateVideoBtn" class="btn btn-primary">
-                            🚀 Generate Video (💰 123 Kredit)
+
+                    <div class="form-group">
+                        <label>Input Image</label>
+                        <input type="file" id="klingImage" accept="image/*" style="width: 100%; padding: 10px;">
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button id="klingGenerateBtn" class="btn btn-primary">
+                            🚀 Generate Video (123 Credits)
                         </button>
                     </div>
                 </div>
 
-                <div class="card" id="videoResultCard" style="display: none;">
+                <div class="card" id="klingResultCard" style="display: none;">
                     <h2>🎬 Hasil Video</h2>
                     <div class="result-video-container">
-                        <video id="resultVideo" controls style="width: 100%; max-width: 512px;">
-                            <source src="" type="video/mp4">
-                        </video>
+                        <video id="resultVideo" controls style="width: 100%; max-width: 600px;"></video>
                         <div class="result-info">
-                            <p>Kredit terpakai: <span id="videoUsedCredits">0</span></p>
-                            <p>Sisa kredit: <span id="videoRemainingCredits">0</span></p>
-                            <a id="downloadLink" href="#" class="btn btn-secondary" download>⬇️ Download</a>
+                            <p>Kredit terpakai: <span id="usedCredits">123</span></p>
+                            <p>Sisa kredit: <span id="remainingCredits">0</span></p>
                         </div>
                     </div>
                 </div>
@@ -305,7 +190,6 @@
                 <div class="header">
                     <h1>Riwayat Penggunaan</h1>
                 </div>
-
                 <div class="card">
                     <div class="table-container">
                         <table class="table">
@@ -317,9 +201,7 @@
                                     <th>Waktu</th>
                                 </tr>
                             </thead>
-                            <tbody id="historyTable">
-                                <!-- Data will be loaded here -->
-                            </tbody>
+                            <tbody id="historyTable"></tbody>
                         </table>
                     </div>
                 </div>
@@ -329,4 +211,4 @@
 
     <script src="app.js"></script>
 </body>
-</html>// DEPLOY TRIGGER 1782746471
+</html>
