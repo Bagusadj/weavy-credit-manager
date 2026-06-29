@@ -2,8 +2,6 @@ services:
   - type: web
     name: weavy-credit-manager
     env: node
-    region: singapore
-    plan: free
     buildCommand: cd backend && npm install
     startCommand: cd backend && node server.js
     envVars:
