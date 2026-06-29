@@ -279,6 +279,107 @@ app.post('/api/accounts/sync', async (req, res) => {
     }
 });
 
+// Kling Motion Control Workflow (123 credits)
+app.post('/api/workflow/kling-motion', upload.single('image'), async (req, res) => {
+    const { accountId, prompt, motionStrength = 5 } = req.body;
+    
+    if (!req.file) {
+        return res.status(400).json({ error: 'Image required' });
+    }
+    
+    try {
+        // Get account
+        db.get('SELECT * FROM accounts WHERE id = ?', [accountId], async (err, account) => {
+            if (err || !account) {
+                fs.unlinkSync(req.file.path);
+                return res.status(404).json({ error: 'Account not found' });
+            }
+            
+            const CREDITS_COST = 123;
+            
+            if (account.credit < CREDITS_COST) {
+                fs.unlinkSync(req.file.path);
+                return res.status(400).json({ error: `Insufficient credits. Need ${CREDITS_COST}, have ${account.credit}` });
+            }
+            
+            try {
+                // Read image
+                const imageData = fs.readFileSync(req.file.path);
+                const base64Image = imageData.toString('base64');
+                
+                // Call Weavy Kling Motion API
+                const auth = account.api_key || account.password;
+                const response = await axios.post(
+                    `${WEAVY_BASE_URL}/workflows/kling-motion/generate`,
+                    {
+                        image: `data:image/png;base64,${base64Image}`,
+                        prompt: prompt || '',
+                        motionStrength: parseInt(motionStrength),
+                        duration: 5 // seconds
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${auth}`,
+                            'Content-Type': 'application/json'
+                        },
+                        timeout: 120000 // 2 minutes for video gen
+                    }
+                );
+                
+                const videoUrl = response.data.videoUrl || response.data.url;
+                
+                // Deduct credits
+                const newCredit = account.credit - CREDITS_COST;
+                db.run(`UPDATE accounts SET credit = ? WHERE id = ?`, [newCredit, accountId]);
+                
+                // Log usage
+                db.run(`INSERT INTO usage_log (account_id, model, credits_used) VALUES (?, ?, ?)`, 
+                    [accountId, 'kling-motion', CREDITS_COST]);
+                
+                // Clean up
+                fs.unlinkSync(req.file.path);
+                
+                res.json({
+                    success: true,
+                    videoUrl,
+                    creditsUsed: CREDITS_COST,
+                    remainingCredits: newCredit
+                });
+                
+            } catch (error) {
+                fs.unlinkSync(req.file.path);
+                console.error('Kling API error:', error.message);
+                res.status(500).json({ 
+                    error: error.response?.data?.message || error.message 
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('Workflow error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get available workflows
+app.get('/api/workflows', (req, res) => {
+    const workflows = [
+        {
+            id: 'kling-motion',
+            name: 'Kling Motion Control',
+            description: 'Convert image to video with motion control',
+            credits: 123,
+            input: { type: 'image', accept: 'image/*' },
+            output: { type: 'video', format: 'mp4' },
+            settings: [
+                { key: 'prompt', label: 'Motion Prompt', type: 'text', placeholder: 'Describe motion...' },
+                { key: 'motionStrength', label: 'Motion Strength', type: 'range', min: 1, max: 10, default: 5 }
+            ]
+        }
+    ];
+    res.json({ workflows });
+});
+
 // Deduct credits
 app.post('/api/accounts/deduct', (req, res) => {
     const { accountId, model, creditsUsed } = req.body;
