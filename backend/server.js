@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -19,7 +19,8 @@ app.use('/uploads', express.static('uploads'));
 const upload = multer({ dest: 'uploads/' });
 
 // SQLite Database
-const db = new sqlite3.Database('./data/credits.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, './data/credits.db');
+const db = new sqlite3.Database(dbPath);
 
 // Initialize database
 db.serialize(() => {
