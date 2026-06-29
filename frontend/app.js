@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3000/api';
+// Auto-detect API base - works on localhost and production
+const API_BASE = window.location.origin + '/api';
 
 // Navigation
 const navItems = document.querySelectorAll('.nav-item');

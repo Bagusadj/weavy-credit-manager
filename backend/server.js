@@ -12,7 +12,14 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Serve frontend with proper CORS for production
+app.use(express.static(path.join(__dirname, '../frontend'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 app.use('/uploads', express.static('uploads'));
 
 // File upload setup
