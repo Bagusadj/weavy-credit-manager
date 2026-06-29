@@ -42,31 +42,50 @@
                 </div>
 
                 <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-info">
-                            <h3 id="totalCredits">0</h3>
-                            <p>Total Kredit</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-info">
-                            <h3 id="activeAccounts">0</h3>
-                            <p>Akun Aktif</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-info">
-                            <h3 id="totalAccounts">0</h3>
-                            <p>Total Akun</p>
-                        </div>
-                    </div>
-                </div>
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <div class="stat-icon">💰</div>
+                                        <div class="stat-info">
+                                            <h3 id="totalCredits">0</h3>
+                                            <p>Total Kredit</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">✅</div>
+                                        <div class="stat-info">
+                                            <h3 id="activeAccounts">0</h3>
+                                            <p>Akun Aktif</p>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-icon">📊</div>
+                                        <div class="stat-info">
+                                            <h3 id="totalAccounts">0</h3>
+                                            <p>Total Akun</p>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <!-- Add Account Section -->
+                                <!-- Login Section -->
+                                <div class="card">
+                                    <h2>🔐 Login Weavy (Google OAuth)</h2>
+                                    <div class="form-group">
+                                        <label for="loginEmail">Email Google Workspace</label>
+                                        <input type="email" id="loginEmail" placeholder="user@zenoid.xyz" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="loginPassword">Password</label>
+                                        <input type="password" id="loginPassword" placeholder="••••••••" class="form-input">
+                                    </div>
+                                    <button id="loginBtn" class="btn btn-primary">🚀 Login & Sync Credits</button>
+                                    <div id="loginProgress" class="progress" style="display: none;">
+                                        <div class="progress-bar"></div>
+                                        <p>Logging in... (30-60 detik)</p>
+                                    </div>
+                                    <div id="loginResult" class="result"></div>
+                                </div>
+
+                                <!-- Kling Workflow Section -->
                 <div class="card">
                     <h2>➕ Tambah Akun Weavy</h2>
                     <p style="color: #888; font-size: 14px; margin-bottom: 15px;">

@@ -240,5 +240,51 @@ function formatDate(dateString) {
     });
 }
 
+
+// Login with Google OAuth
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) {
+    loginBtn.addEventListener('click', async () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+            alert('Masukkan email dan password!');
+            return;
+        }
+        
+        const btn = document.getElementById('loginBtn');
+        const progress = document.getElementById('loginProgress');
+        const result = document.getElementById('loginResult');
+        
+        btn.disabled = true;
+        progress.style.display = 'block';
+        result.innerHTML = '';
+        
+        try {
+            const response = await fetch(`${API_BASE}/accounts/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const data = await response.json();
+            progress.style.display = 'none';
+            
+            if (data.success) {
+                result.innerHTML = `<div class="result success"><h3>✅ Login Berhasil!</h3><p>Email: ${data.email}</p><p>Credits: 💰 ${data.credits}</p></div>`;
+                loadDashboardData();
+            } else {
+                result.innerHTML = `<div class="result error"><h3>❌ Login Gagal!</h3><p>${data.error}</p></div>`;
+            }
+        } catch (error) {
+            progress.style.display = 'none';
+            result.innerHTML = `<div class="result error"><h3>❌ Login Error!</h3><p>${error.message}</p></div>`;
+        } finally {
+            btn.disabled = false;
+        }
+    });
+}
+
 // Initial load
 loadDashboardData();

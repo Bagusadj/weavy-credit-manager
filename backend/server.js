@@ -72,7 +72,96 @@ db.serialize(() => {
 });
 
 // Weavy API Configuration
-const WEAVY_BASE_URL = 'https://app.weavy.ai';
+const WEAVY_BASE_URL = 'https://api.weavy.ai';
+
+// Login with Google OAuth (via Playwright)
+app.post('/api/accounts/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+    }
+    
+    let browser;
+    try {
+        browser = await chromium.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-dev-shm-usage']
+        });
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        
+        // Navigate to Weavy login
+        await page.goto('https://app.weavy.ai/', { waitUntil: 'networkidle', timeout: 30000 });
+        
+        // Click "Log in with Google"
+        await page.click('button:has-text("Log in with Google")', { timeout: 10000 });
+        await page.waitForTimeout(3000);
+        
+        // Google login page
+        await page.fill('input[type="email"]', email, { timeout: 10000 });
+        await page.click('button:has-text("Next")');
+        await page.waitForTimeout(2000);
+        
+        await page.fill('input[type="password"]', password, { timeout: 10000 });
+        await page.click('button:has-text("Next")');
+        await page.waitForTimeout(5000);
+        
+        // Handle "Welcome" page - click "I understand"
+        try {
+            await page.click('button:has-text("I understand")', { timeout: 5000 });
+            await page.waitForTimeout(2000);
+        } catch (e) {
+            console.log('No welcome popup');
+        }
+        
+        // Wait for dashboard
+        await page.waitForSelector('button:has-text("Create New File")', { timeout: 15000 });
+        
+        // Get cookies
+        const cookies = await context.cookies();
+        const sessionCookie = JSON.stringify(cookies);
+        
+        // Get initial credits
+        let credits = 0;
+        try {
+            const creditsRes = await axios.post(`${WEAVY_BASE_URL}/users/onboarding-credits`,
+                { force: true },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${cookies.find(c => c.name === 'token')?.value || ''}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            credits = creditsRes.data.credits || 0;
+        } catch (e) {
+            console.log('Credits check failed:', e.message);
+        }
+        
+        await browser.close();
+        
+        // Save to database
+        const stmt = db.prepare(`
+            INSERT OR REPLACE INTO accounts (email, password, session_cookie, credit, status, last_sync)
+            VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
+        `);
+        stmt.run(email, password, sessionCookie, credits);
+        stmt.finalize();
+        
+        res.json({
+            success: true,
+            email,
+            credits,
+            message: 'Login successful'
+        });
+        
+    } catch (error) {
+        if (browser) await browser.close();
+        console.error('Login error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Add account manually (after manual login)
 app.post('/api/accounts/add', async (req, res) => {
