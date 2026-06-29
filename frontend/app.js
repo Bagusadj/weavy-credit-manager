@@ -366,4 +366,4 @@ function formatDate(dateString) {
 }
 
 // Initial load
-loadDashboardData();
+loadDashboardData();// Force redeploy Mon Jun 29 13:41:31 UTC 2026
