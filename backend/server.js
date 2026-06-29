@@ -433,8 +433,9 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const lines = fileContent.split('\n');
         
-        // Parse into account pairs
+        // Parse into account pairs (deduplicate by email)
         const accounts = [];
+        const seenEmails = new Set();
         let currentEmail = null;
         let currentPassword = null;
         
@@ -450,7 +451,10 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
             }
             if (passwordMatch && currentEmail) {
                 currentPassword = passwordMatch[1].trim();
-                accounts.push({ email: currentEmail, password: currentPassword });
+                if (!seenEmails.has(currentEmail)) {
+                    accounts.push({ email: currentEmail, password: currentPassword });
+                    seenEmails.add(currentEmail);
+                }
                 currentEmail = null;
                 currentPassword = null;
             }
@@ -504,10 +508,12 @@ app.post('/api/accounts/auto-register', upload.single('accounts'), async (req, r
                 });
 
             } catch (error) {
-                console.error(`❌ Failed ${account.email}: ${error.message}`);
+                const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
+                console.error(`❌ Failed ${account.email}: ${errorMsg}`);
                 results.failed.push({
                     email: account.email,
-                    error: error.message
+                    error: errorMsg,
+                    status: error.response?.status || 'unknown'
                 });
             }
         }
